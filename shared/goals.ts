@@ -4,6 +4,7 @@ import { z } from "zod";
 export const goalSchema = z.object({
   objective: z.string(), status: z.string(),
   createdAt: z.number().nullable(), updatedAt: z.number().nullable(),
+  tokenBudget: z.number().nullable().optional(), tokensUsed: z.number().optional(), timeUsedSeconds: z.number().optional(),
 });
 export const goalStateSchema = z.object({
   goal: goalSchema.nullable(), completedGoal: goalSchema.nullable(),
@@ -21,7 +22,25 @@ export function goalFromNative(value: unknown): z.infer<typeof goalSchema> | nul
   const goal = value as Record<string, unknown>;
   if (typeof goal.objective !== "string" || typeof goal.status !== "string") return null;
   const number = (v: unknown) => typeof v === "number" && Number.isFinite(v) ? v : null;
-  return { objective: goal.objective, status: goal.status, createdAt: number(goal.createdAt), updatedAt: number(goal.updatedAt) };
+  return { objective: goal.objective, status: goal.status, createdAt: number(goal.createdAt), updatedAt: number(goal.updatedAt),
+    ...(goal.tokenBudget !== undefined ? { tokenBudget: number(goal.tokenBudget) } : {}),
+    ...(number(goal.tokensUsed) !== null ? { tokensUsed: Number(goal.tokensUsed) } : {}),
+    ...(number(goal.timeUsedSeconds) !== null ? { timeUsedSeconds: Number(goal.timeUsedSeconds) } : {}),
+  };
+}
+export function goalSummary(state: GoalState | null): string {
+  const goal = state?.goal ?? state?.completedGoal;
+  if (!goal) return goalLabel(state);
+  const label = goalLabel(state).replace("目标 · ", "");
+  const objective = goal.objective.replace(/\s+/g, " ").trim();
+  return `${label} · ${objective.length > 48 ? objective.slice(0, 48) + "…" : objective}`;
+}
+export function goalDuration(seconds: number): string {
+  let value = Math.max(0, Math.floor(seconds));
+  const days = Math.floor(value / 86400); value %= 86400;
+  const hours = Math.floor(value / 3600); value %= 3600;
+  const minutes = Math.floor(value / 60); value %= 60;
+  return [days ? `${days}d` : "", days || hours ? `${hours}h` : "", days || hours || minutes ? `${minutes}m` : "", `${value}s`].filter(Boolean).join(" ");
 }
 export function goalFromState(state: Record<string, unknown> | undefined, revision: number, connected = true, error: string | null = null): GoalState {
   const goal = goalFromNative(state?.threadGoal);

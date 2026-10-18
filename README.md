@@ -46,11 +46,34 @@ Desktop 的公开 imageView 事件会在 Paseo 时间线显示“已查看 1 张
 
 ## 目标状态
 
-Desktop agent 的输入框附近显示“目标 · 未设置 / 进行中 / 已暂停 / 已完成”等状态。点击打开目标面板，查看目标内容和更新时间；也可输入 `/desktop-goal` 或在 Command Center 选择“查看 Desktop 目标”。Desktop 中设置、恢复、完成或清除目标后，面板通过原生会话事件和 Paseo 的认证事件流同步，没有定时刷新。重新打开或重连会读取一次权威快照；断线时明确显示“未同步”，保留的信息可能已过时。没有原生目标数据时不会从普通聊天文本推断目标。
+原生 Codex provider 输入 `/goal 目标内容` 并返回 `Goal set: ...` 后，输入框上方常驻显示目标状态、摘要、Codex 记录的累计执行时长，以及暂停/继续、清除操作。完整目标可点击展开，或输入 `/codex-goal`，也可在 Command Center 选择“查看会话目标”。升级时会恢复现有会话的原生目标，无需重新设置目标。
+
+目标状态只读查询 daemon 机器上的 `$CODEX_HOME/goals_1.sqlite`（默认 `~/.codex/goals_1.sqlite`），通过 `fs.watch` 数据库/WAL 变化同步，再经 Paseo 的认证事件流推送。数据库不会被插件写入，也不会另启 app-server 接管会话。暂停/继续/清除调用 Paseo 现有的 `/goal pause`、`/goal resume`、`/goal clear`；收到命令完成回执时也会读取一次状态，兼容不完整的 WAL 文件通知，没有定时状态轮询。时长为 Codex 记录的累计执行时间，非聊天创建后的墙钟时间。
+
+需要提供 `goals_1.sqlite/thread_goals` 的 Codex 版本和支持 `node:sqlite` 的 Node 22.13+ 运行时。使用自定义 Codex home 时，设置 daemon 环境变量 `PASEO_CODEX_BRIDGE_NATIVE_CODEX_HOME`；优先于 `CODEX_HOME`。若数据库格式或运行时不受支持，显示同步错误，不推断目标状态。
+
+ChatGPT Desktop provider 也会显示其原生目标。Desktop 中设置、恢复、完成或清除目标后，通过原生会话事件同步；`/desktop-goal` 可打开详情。重新打开或重连会读取一次权威快照；断线时明确显示“未同步”，保留的信息可能已过时。
 
 “暂停目标并停止执行”已接入 Desktop 的原生 user-stop 操作；它会暂停活动目标、停止当前轮次并清理后台终端。只有收到 Desktop 的状态变更后才确认结果；暂停失败会报错。该操作不同于只中断某一轮次的普通停止。
 
-当前对照版本的外部会话通道没有专用的目标设置、恢复或清除方法，app-tools 也未提供对应工具；这些操作请用“在 Desktop 中管理”打开原会话完成。插件没有通过普通提示词模拟这些控制，也没有创建额外目标执行循环。本版本只为 ChatGPT Desktop provider 增加目标展示；Paseo 原生 Codex 的 `/goal` 不受影响。
+Desktop 外部会话通道目前没有专用的目标设置、恢复或清除方法，app-tools 也未提供对应工具；这些操作请用“在 Desktop 中管理”打开原会话完成。插件没有通过普通提示词模拟这些控制，也没有创建额外目标执行循环。
+
+### 紧凑目标栏样式
+
+Paseo 0.12.0-beta.2 的公开插件接口将 composer pill 限制在 160px，并强制带文字。仓库提供可选、可恢复的宿主 UI 适配：仅本插件的目标摘要最多 420px（窄屏 220px），暂停/继续和清除为 28px 图标按钮，保留提示、无障碍名称和原有交互；时长去除外框。其他插件和 Paseo 原有按钮不变。
+
+```sh
+node scripts/style-goal-bar.mjs --app-root "Paseo 的 resources 目录" --dry-run
+node scripts/style-goal-bar.mjs --app-root "Paseo 的 resources 目录"
+```
+
+完成后刷新 Paseo 窗口；不必重启 daemon。脚本备份原始 bundle，不认识的渲染器会在写入前报错。Paseo 更新可能覆盖适配，需重新检查和应用。恢复命令：
+
+```sh
+node scripts/style-goal-bar.mjs --app-root "Paseo 的 resources 目录" --restore
+```
+
+Windows 支持显式指定自定义安装目录。macOS 仅建议对未签名的开发构建使用，传入 Resources 路径及 `--unsigned-build`；脚本不自动修改签名应用，因为修改其资源会使签名失效。未应用此适配时，目标功能仍可用，使用 Paseo 默认的按钮尺寸。当前适配已对本机 Windows bundle 检查和应用，尚未在实体 Mac 验证。
 
 ## 原生子 agent 与归档
 

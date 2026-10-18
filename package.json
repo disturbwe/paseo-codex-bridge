@@ -1,7 +1,7 @@
 {
   "name": "paseo-codex-bridge",
   "private": true,
-  "version": "0.1.6",
+  "version": "0.1.8",
   "files": [
     "paseo-plugin.json",
     "desktop.svg",
@@ -32,12 +32,18 @@
     "shared/image-viewport.ts",
     "client/goals.tsx",
     "server/goals.ts",
-    "shared/goals.ts"
+    "shared/goals.ts",
+    "server/native-goal-store.ts",
+    "server/native-goals.ts",
+    "shared/native-goals.ts",
+    "scripts/style-goal-bar.mjs",
+    "scripts/goal-bar-style.mjs"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test server/*.test.ts",
-    "smoke:desktop": "tsx scripts/smoke-desktop.ts"
+    "test": "tsx --test server/*.test.ts server/*.test.mjs",
+    "smoke:desktop": "tsx scripts/smoke-desktop.ts",
+    "style:goals": "node scripts/style-goal-bar.mjs"
   },
   "devDependencies": {
     "@getpaseo/plugin": "0.11.4",
