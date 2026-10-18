@@ -1,7 +1,7 @@
 {
   "name": "paseo-codex-bridge",
   "private": true,
-  "version": "0.1.4",
+  "version": "0.1.5",
   "files": [
     "paseo-plugin.json",
     "desktop.svg",
@@ -26,7 +26,10 @@
     "server/workspace-cleanup.ts",
     "server/images.ts",
     "shared/images.ts",
-    "client/images.tsx"
+    "client/images.tsx",
+    "client/image-viewer.tsx",
+    "client/image-wheel.ts",
+    "shared/image-viewport.ts"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
