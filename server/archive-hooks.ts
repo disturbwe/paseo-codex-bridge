@@ -1,7 +1,8 @@
 import type { PaseoApi } from "@getpaseo/client";
 import type { PluginHookAgent, PluginServerContext } from "@getpaseo/plugin/server";
 import type { DesktopBridge } from "./bridge";
-import { archiveChildren, archiveChild } from "../shared/archive";
+import { cleanupEmptyDesktopWorkspace } from "./workspace-cleanup";
+import { archiveChildren, archiveChild, archiveEmptyWorkspace } from "../shared/archive";
 
 export async function bindAgent(bridge: DesktopBridge, paseo: PaseoApi, agentId: string) {
   const snapshot = await paseo.agents.ref(agentId).refresh();
@@ -27,6 +28,7 @@ export function registerArchiveHooks(server: PluginServerContext, bridge: Deskto
     if (agent.provider !== "chatgpt-desktop") return;
     const id = await bindAgent(bridge, paseo, agent.id) ?? bridge.archives.agent(agent.id)?.threadId;
     if (id) await bridge.archives.archiveTree(id);
+    if (agent.workspaceId) await cleanupEmptyDesktopWorkspace(paseo,bridge,agent.workspaceId);
   });
   server.on("workspace.archived", ({ workspace }) => bridge.archives.archiveWorkspace(workspace.id).then(() => {}));
   server.handle(archiveChildren, async ({ agentId }, { paseo }) => {
@@ -40,5 +42,6 @@ export function registerArchiveHooks(server: PluginServerContext, bridge: Deskto
     if (!id) throw new Error("当前 agent 不是 Desktop 会话。");
     return { archivedThreadIds: await bridge.archives.archiveChild(agentId, threadId) };
   });
+  server.handle(archiveEmptyWorkspace, async ({ workspaceId }, { paseo }) => ({ archived: await cleanupEmptyDesktopWorkspace(paseo,bridge,workspaceId) }));
   void bridge.archives.resumePending().catch(error => bridge.evidence("archive_recovery_pending", { error: String(error) }));
 }
