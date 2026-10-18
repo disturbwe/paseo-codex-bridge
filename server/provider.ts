@@ -13,7 +13,7 @@ import { desktopDefault } from "./models";
 import { childSessionId, childrenFromItem, type DesktopChild } from "./subagents";
 
 type Json = any;
-const supported = ["prompt.message", "session.list", "session.persistence", "session.configure", "session.subsession", "session.archive", "session.unarchive"] as const;
+const supported = ["prompt.message", "session.list", "session.persistence", "session.configure", "session.subsession", "session.archive", "session.unarchive", "timeline.plugin"] as const;
 const modes = [{ id: "desktop", label: "沿用 Desktop 权限设置" }];
 const persistence = (threadId: string): ProviderPersistence => ({ version: 1, data: { threadId } });
 
@@ -36,9 +36,7 @@ export function timelineFromItem(item: Json): ProviderTimelineItem | null {
   if (item.type === "imageView") {
     const filePath=imagePath(item.path)??"";
     const status=item.status==="inProgress"?"running":item.status==="failed"?"failed":item.status==="interrupted"?"canceled":"completed";
-    const detail={type:"plain_text" as const,label:"已查看 1 张图像",text:filePath||"Desktop 未提供图像路径",icon:"eye" as const};
-    const metadata={desktopImageView:true,filePath};
-    return status==="failed"?{type:"tool_call",id,callId:item.id,name:"Desktop image view",detail,metadata,status,error:{message:"Desktop image view failed"}}:{type:"tool_call",id,callId:item.id,name:"Desktop image view",detail,metadata,status,error:null};
+    return {type:"plugin",id,pluginId:"paseo-codex-desktop",kind:"desktop-image-view",version:1,data:{callId:item.id,filePath,status}};
   }
   if (item.type === "commandExecution") {
     const status = item.status === "inProgress" ? "running" : item.status === "failed" || (typeof item.exitCode === "number" && item.exitCode !== 0) ? "failed" : item.status === "interrupted" ? "canceled" : "completed";
