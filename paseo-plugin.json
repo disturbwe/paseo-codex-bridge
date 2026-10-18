@@ -1,0 +1,9 @@
+{
+  "id": "paseo-codex-desktop",
+  "name": "Paseo Codex Bridge",
+  "media": [],
+  "requirements": {
+    "paseo": ">=0.11.4"
+  },
+  "description": "Manage real Codex Desktop conversations and native subagents in Paseo, with synchronized archival."
+}

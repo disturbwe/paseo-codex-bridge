@@ -1,0 +1,21 @@
+# Paseo Codex Bridge
+
+将真实的本机 Codex Desktop 聊天接入 Paseo 普通 Provider 和 agent。支持选择 Desktop 当前可用模型与推理强度、发送消息、流式输出、停止、导入与恢复；Desktop 原生子 agent 出现在输入框上方的 subagent 列表中。
+
+需要 Paseo 0.11.4 或更新版本，并保持 Codex Desktop 运行。首次连接需在本机插件数据目录的 config.json 中配置 callerThreadId，详见仓库 README。插件显示名为 Paseo Codex Bridge，安装 ID 保留 paseo-codex-desktop，Provider ID 为 chatgpt-desktop，显示为 ChatGPT Desktop。
+
+## 子会话归档
+
+主 agent 输入 /desktop-archive 或在 Command Center 选择“归档 Desktop 子 agent 会话”，可单独归档原生子会话及其后代。归档 Paseo agent 或工作区时，自动归档其所属 Desktop 主会话和后代，保留历史并释放订阅。工作区范围按 ID 确定，不根据共享目录扩大范围。
+
+恢复主 agent 时，同步恢复随它归档的子会话；单独归档的子会话继续保持归档。同步失败保存本地待处理记录，下次插件启动、重载或显式归档时重试。Paseo 自身的归档可能先完成，Desktop 同步失败需查看插件日志，没有定时重试循环。
+
+## 系统与连接
+
+支持 Windows 命名管道和 macOS Unix socket 传输；后台子任务通过 fs.watch 文件变化通知同步公开消息、命令和生命周期，无任务状态轮询。Windows 已真实验证；macOS 传输和自动测试已适配，尚待真实 Desktop 端到端验证。部分 macOS 发行版的连接进程签名限制可能拒绝第三方客户端，插件无法绕过。
+
+协议对照版本为 Codex Desktop 26.1013.4894.0 和 Paseo 0.11.4。Desktop 更新可能改变内部接口。权限审批、附件、环境变量和 MCP 设置由 Desktop 管理。恢复旧聊天可能需要先在 Desktop 打开它；没有匹配已保存项目的新聊天由 Desktop 分配独立目录。
+
+子任务实时同步依赖原生 spawnAgent 事件中的 rollout 路径，仅有 subAgentActivity 而无路径的版本尚未覆盖。Desktop 中手动归档尚不反向归档 Paseo 工作区。
+
+后端可将用户已授权的 Paseo 任务完成事件发送到指定 Desktop 聊天，目标忙碌时等空闲事件再投递，从而自动唤醒聊天。配置、回传绑定、归档索引和日志只保存在本机插件数据目录。私有推理、系统和开发者消息不进入 Paseo 时间线。

@@ -1,0 +1,12 @@
+node_modules/
+data/
+*.tmp
+.env
+.env.*
+.DS_Store
+*.log
+client/greeting.tsx
+server/greeting.ts
+shared/greeting.ts
+client/desktop.tsx
+client/web.ts
