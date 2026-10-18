@@ -194,6 +194,22 @@ export class DesktopBridge {
     const turnId=this.state.details[threadId]?.activeTurnId;if(!turnId)throw new Error("该会话没有可中断的活动轮次。");
     await this.events.interrupt(threadId,turnId);this.record("desktop_interrupted",{threadId,turnId});return {accepted:true};
   }
+  async pauseGoal(threadId:string){
+    if(this.snapshot(threadId)?.threadGoal?.status!=="active")throw new Error("当前没有可暂停的活动目标。");
+    let dispose=()=>{};
+    let timer:ReturnType<typeof setTimeout>;
+    const confirmed=new Promise<void>((resolve,reject)=>{
+      timer=setTimeout(()=>reject(new Error("Desktop 尚未推送暂停结果；请检查目标状态后再操作。")),10000);
+      dispose=this.subscribe((id,state)=>{if(id===threadId&&state.threadGoal?.status!=="active")resolve();},reject);
+    });
+    void confirmed.catch(()=>{});
+    try {
+      await this.events.pauseGoal(threadId);
+      if(!this.state.connected||!this.snapshot(threadId))throw new Error("Desktop 连接已断开，暂停结果尚未确认。");
+      if(this.snapshot(threadId)?.threadGoal?.status==="active")await confirmed;
+      this.record("desktop_goal_stop_confirmed",{threadId,status:this.snapshot(threadId)?.threadGoal?.status??"cleared"});
+    } finally {clearTimeout(timer!);dispose();}
+  }
   async open(threadId:string){await this.tools.call("navigate_to_codex_page",{threadId});return {accepted:true};}
   async watchCompletion(input:{agentId:string;threadId:string;verificationId:string}){
     if(this.routes.has(input.agentId))throw new Error("该子任务已有回传绑定。请使用新的子任务。");

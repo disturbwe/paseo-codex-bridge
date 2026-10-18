@@ -44,6 +44,14 @@ Desktop 的公开 imageView 事件会在 Paseo 时间线显示“已查看 1 张
 
 预览支持不超过 4 MiB 的 PNG、JPEG、GIF、WebP。原图移动或删除后会显示加载失败；同一路径的文件被覆盖时，预览显示当前文件内容。升级前已缓存的历史需要通过 Paseo 的 Reload agent 重新回放；若首次只恢复了旧缓存，可再执行一次 Reload agent。
 
+## 目标状态
+
+Desktop agent 的输入框附近显示“目标 · 未设置 / 进行中 / 已暂停 / 已完成”等状态。点击打开目标面板，查看目标内容和更新时间；也可输入 `/desktop-goal` 或在 Command Center 选择“查看 Desktop 目标”。Desktop 中设置、恢复、完成或清除目标后，面板通过原生会话事件和 Paseo 的认证事件流同步，没有定时刷新。重新打开或重连会读取一次权威快照；断线时明确显示“未同步”，保留的信息可能已过时。没有原生目标数据时不会从普通聊天文本推断目标。
+
+“暂停目标并停止执行”已接入 Desktop 的原生 user-stop 操作；它会暂停活动目标、停止当前轮次并清理后台终端。只有收到 Desktop 的状态变更后才确认结果；暂停失败会报错。该操作不同于只中断某一轮次的普通停止。
+
+当前对照版本的外部会话通道没有专用的目标设置、恢复或清除方法，app-tools 也未提供对应工具；这些操作请用“在 Desktop 中管理”打开原会话完成。插件没有通过普通提示词模拟这些控制，也没有创建额外目标执行循环。本版本只为 ChatGPT Desktop provider 增加目标展示；Paseo 原生 Codex 的 `/goal` 不受影响。
+
 ## 原生子 agent 与归档
 
 Desktop 主聊天调用原生 `spawn_agent` 后，子任务显示在 Paseo 输入框上方的 subagent 列表中，可查看独立输出。插件不自动创建 Settings → Agents 中的启动配置。
@@ -87,6 +95,7 @@ npm run smoke:desktop
 ## 已知边界
 
 - 使用非公开 Desktop 协议，当前对照版本为 Codex Desktop 26.1013.4894.0、Paseo 0.11.4；更新可能需要协议适配。
+- 目标功能已在 Windows、Paseo 0.12.0-beta.2 上验证真实目标创建后的事件展示和原生暂停；设置、恢复、清除的插件控制入口仍未接入。
 - Desktop 审批、附件、环境变量与 MCP 设置仍由 Desktop 管理，Paseo 配置不会覆盖它们。
 - Paseo 目录匹配 Desktop 已保存项目时使用该项目；否则 Desktop 分配独立聊天目录，可能与 Paseo 目录不同。
 - 原生子任务实时同步需要 `collabAgentToolCall/spawnAgent` 事件中的 rollout 路径；仅提供 `subAgentActivity` 而没有路径的版本尚未覆盖。

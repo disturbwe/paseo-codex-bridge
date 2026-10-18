@@ -8,7 +8,8 @@ export async function bindAgent(bridge: DesktopBridge, paseo: PaseoApi, agentId:
   const snapshot = await paseo.agents.ref(agentId).refresh();
   if (!snapshot || snapshot.agent.provider !== "chatgpt-desktop") return;
   const stored = snapshot.agent.persistence?.metadata?.pluginProviderPersistence as { version?: number; data?: { threadId?: string } } | undefined;
-  const threadId = stored?.version === 1 ? stored.data?.threadId : undefined;
+  // During the first running turn, Paseo may not yet persist provider metadata.
+  const threadId = (stored?.version === 1 ? stored.data?.threadId : undefined) ?? bridge.archives.agent(agentId)?.threadId;
   if (threadId) bridge.archives.registerAgent(agentId, snapshot.agent.workspaceId ?? null, threadId);
   return threadId;
 }

@@ -91,13 +91,14 @@ export class AppTools {
 }
 
 export class DesktopEvents {
-  private pipe=new FramedPipe(eventsEndpoint());
+  private pipe:FramedPipe;
   private clientId="uninitialized";
   private owners=new Map<string,string>();
   private ready:Promise<void>|null=null;
   onChange:(threadId:string,change:Json)=>void=()=>{};
   onDisconnect:(error:Error)=>void=()=>{};
-  constructor(private count:()=>void){
+  constructor(private count:()=>void,endpoint=eventsEndpoint()){
+    this.pipe=new FramedPipe(endpoint);
     this.pipe.onDisconnect=error=>{this.ready=null;this.owners.clear();this.onDisconnect(error);};
     this.pipe.onMessage=message=>{
       if(message.type==="client-discovery-request")this.pipe.write({type:"client-discovery-response",requestId:message.requestId,response:{canHandle:false}});
@@ -123,6 +124,14 @@ export class DesktopEvents {
   unfollow(threadId:string){if(!this.owners.has(threadId))return;try{this.following(threadId,false);}finally{this.owners.delete(threadId);}}
   async interrupt(threadId:string,expectedTurnId:string){
     await this.follow(threadId);return this.request("thread-follower-interrupt-turn",{conversationId:threadId,expectedTurnId},4,this.owners.get(threadId));
+  }
+  async pauseGoal(threadId:string){
+    await this.follow(threadId);
+    // Desktop's expectedTurnId path only interrupts a turn. User-stop without
+    // expectedTurnId pauses the goal first, including between continuation turns.
+    const response=await this.request("thread-follower-interrupt-turn",{conversationId:threadId,mode:"user-stop"},3,this.owners.get(threadId));
+    if(response.result?.goalPauseError)throw new Error(response.result.goalPauseError);
+    if(response.result?.ok!==true)throw new Error("Desktop 未确认暂停目标。");
   }
   async readSettings(threadId:string){
     await this.follow(threadId);const response=await this.request("thread-follower-read-model-settings",{conversationId:threadId},1,this.owners.get(threadId));return response.result.settings;
