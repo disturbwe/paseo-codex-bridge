@@ -8,6 +8,8 @@
 
 主 agent 输入 /desktop-archive 或在 Command Center 选择“归档 Desktop 子 agent 会话”，可单独归档原生子会话及其后代。归档 Paseo agent 或工作区时，自动归档其所属 Desktop 主会话和后代，保留历史并释放订阅。工作区范围按 ID 确定，不根据共享目录扩大范围。
 
+最后一个 Desktop agent 归档后，未置顶且无终端、只含已归档 Desktop agents 的普通本地工作区也会自动归档，避免侧栏残留空行。包含其他 Provider 或未归档 agent 的工作区，以及受管理 worktree 会保留。
+
 恢复主 agent 时，同步恢复随它归档的子会话；单独归档的子会话继续保持归档。同步失败保存本地待处理记录，下次插件启动、重载或显式归档时重试。Paseo 自身的归档可能先完成，Desktop 同步失败需查看插件日志，没有定时重试循环。
 
 ## 系统与连接

@@ -44,6 +44,8 @@ Desktop 主聊天调用原生 `spawn_agent` 后，子任务显示在 Paseo 输�
 
 在主 agent 输入 `/desktop-archive`，或通过 Command Center 的“归档 Desktop 子 agent 会话”打开归档面板。单独归档子会话时，其后代一起归档。归档 Paseo agent 时，其 Desktop 主会话及后代一起归档；归档 Paseo 工作区时，按工作区 ID 回收它所属的会话，保留聊天历史并释放事件/文件监听。其他工作区不会因为目录相同被归档。
 
+最后一个 Desktop agent 归档后，如果其 Paseo 工作区只有已归档的 Desktop agents、没有终端且未置顶，插件会同步归档空工作区，让它从活动侧栏移除。包含其他 Provider、仍有未归档 agent 或属于受管理 worktree 的工作区会保留。旧版本遗留的空工作区可通过后端 RPC `desktop.archive.empty-workspace`，传入 `{ workspaceId }` 执行同样的范围检查与回收。
+
 恢复主 agent 时，同步恢复此前随它一起归档的子会话；用户单独归档的子会话继续保持归档。Desktop 暂时不可用时，插件保存待处理操作，在下一次插件启动/重载或显式归档时重试，没有定时重试循环。Paseo 原生归档对 Provider 失败采用 best effort，Paseo 本身可能已归档而 Desktop 同步仍待处理，需查看插件日志。
 
 ## Windows 和 macOS
