@@ -48,6 +48,8 @@ Desktop 的公开 imageView 事件会在 Paseo 时间线显示“已查看 1 张
 
 原生 Codex provider 输入 `/goal 目标内容` 并返回 `Goal set: ...` 后，输入框上方常驻显示目标状态、摘要、Codex 记录的累计执行时长，以及暂停/继续、清除操作。完整目标可点击展开，或输入 `/codex-goal`，也可在 Command Center 选择“查看会话目标”。升级时会恢复现有会话的原生目标，无需重新设置目标。
 
+目标栏的悬停提示只显示状态和“点击查看完整目标”，不把完整长目标放进 tooltip；点击后在详情面板中阅读全文。
+
 目标状态只读查询 daemon 机器上的 `$CODEX_HOME/goals_1.sqlite`（默认 `~/.codex/goals_1.sqlite`），通过 `fs.watch` 数据库/WAL 变化同步，再经 Paseo 的认证事件流推送。数据库不会被插件写入，也不会另启 app-server 接管会话。暂停/继续/清除调用 Paseo 现有的 `/goal pause`、`/goal resume`、`/goal clear`；收到命令完成回执时也会读取一次状态，兼容不完整的 WAL 文件通知，没有定时状态轮询。时长为 Codex 记录的累计执行时间，非聊天创建后的墙钟时间。
 
 需要提供 `goals_1.sqlite/thread_goals` 的 Codex 版本和支持 `node:sqlite` 的 Node 22.13+ 运行时。使用自定义 Codex home 时，设置 daemon 环境变量 `PASEO_CODEX_BRIDGE_NATIVE_CODEX_HOME`；优先于 `CODEX_HOME`。若数据库格式或运行时不受支持，显示同步错误，不推断目标状态。

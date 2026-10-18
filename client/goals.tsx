@@ -17,7 +17,7 @@ export function contributeGoals(client: PluginClientContext) {
     values.set(id, value);
     const registration = registrations.get(id)!;
     const goal = value.goal ?? value.completedGoal;
-    registration.pill.update({ label: goalSummary(value), title: goal ? `${goalLabel(value)}：${goal.objective}` : "查看会话目标", visible: registration.provider !== "codex" || !!goal });
+    registration.pill.update({ label: goalSummary(value), title: goal ? `${goalLabel(value)} · 点击查看完整目标` : "查看会话目标", visible: registration.provider !== "codex" || !!goal });
     registration.duration.update({ label: goalDuration(goal?.timeUsedSeconds ?? 0), visible: !!goal && goal.timeUsedSeconds !== undefined });
     registration.toggle.update({ title: goal?.status === "active" ? "暂停目标" : "继续目标", label: goal?.status === "active" ? "暂停" : "继续", icon: goal?.status === "active" ? "Pause" : "Play", visible: registration.provider === "codex" && !!value.goal && goal?.status !== "complete", disabled: !value.connected });
     registration.clear.update({ visible: registration.provider === "codex" && !!value.goal, disabled: !value.connected });
