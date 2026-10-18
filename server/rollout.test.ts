@@ -22,3 +22,10 @@ test("Background Desktop rollout maps public child output and terminal state wit
   for (const native of reducer.state.turns[0].items) ProviderEventSchema.parse({ type: "timeline.item", sessionId: "child", item: timelineFromItem(native) });
   assert.ok(!JSON.stringify(reducer.state).includes("private"));
 });
+
+test("Background ImageView events keep their stable identity across start and completion",()=>{
+  const reducer=new RolloutReducer("child");reducer.accept({type:"event_msg",payload:{type:"task_started",turn_id:"turn"}});
+  for(const type of ["item_started","item_completed"]){reducer.accept({type:"event_msg",payload:{type,item:{type:"ImageView",id:"image",path:"file:///tmp/result.png"}}});}
+  assert.equal(reducer.state.turns[0].items.length,1);
+  assert.deepEqual(reducer.state.turns[0].items[0],{type:"imageView",id:"image",path:"file:///tmp/result.png",status:"completed"});
+});

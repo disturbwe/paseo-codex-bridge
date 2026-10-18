@@ -4,6 +4,10 @@
 
 需要 Paseo 0.11.4 或更新版本，并保持 Codex Desktop 运行。首次连接需在本机插件数据目录的 config.json 中配置 callerThreadId，详见仓库 README。插件显示名为 Paseo Codex Bridge，安装 ID 保留 paseo-codex-desktop，Provider ID 为 chatgpt-desktop，显示为 ChatGPT Desktop。
 
+## 读图展示
+
+同步 Desktop 的真实读图事件，显示“已查看 1 张图像”。展开可查看路径和预览，点击图片可放大；支持实时同步和历史回放。预览按需读取当前图片文件，支持不超过 4 MiB 的 PNG、JPEG、GIF、WebP。文件移动、删除或覆盖会影响预览。升级前缓存的聊天可用 Reload agent 重新回放。
+
 ## 子会话归档
 
 主 agent 输入 /desktop-archive 或在 Command Center 选择“归档 Desktop 子 agent 会话”，可单独归档原生子会话及其后代。归档 Paseo agent 或工作区时，自动归档其所属 Desktop 主会话和后代，保留历史并释放订阅。工作区范围按 ID 确定，不根据共享目录扩大范围。

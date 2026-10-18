@@ -6,6 +6,7 @@ import type { PluginLifecycleEvents } from "@getpaseo/plugin/server";
 import type { BridgeState, SessionDetail } from "../shared/desktop";
 import { AppTools, DesktopEvents, applyPatches } from "./native";
 import { callerThreadId, DATA_DIRECTORY } from "./config";
+import { imagePath, readImagePreview } from "./images";
 import { modelsFromToolSchema } from "./models";
 import { RolloutFollower } from "./rollout";
 import { ArchiveSynchronizer } from "./archive";
@@ -91,6 +92,19 @@ export class DesktopBridge {
   snapshot(threadId:string){return this.raw.get(threadId)?.state;}
   subscribe(listener:(threadId:string,state:Json)=>void,onDisconnect:(error:Error)=>void){this.listeners.add(listener);this.disconnectListeners.add(onDisconnect);return()=>{this.listeners.delete(listener);this.disconnectListeners.delete(onDisconnect);};}
   evidence(event:string,data:Json){this.record(event,data);}
+  async imagePreview(rootThreadId:string,callId:string){
+    if(!this.raw.has(rootThreadId))await this.follow(rootThreadId);
+    for(const id of [rootThreadId,...this.archives.descendants(rootThreadId).map(node=>node.threadId)]){
+      const state=this.snapshot(id);if(!state)continue;
+      const history=state.turnHistory?.kind==="canonical"?state.turnHistory.history:null;
+      const turns=history?history.islands.flatMap((island:Json)=>island.entries.map((entry:Json)=>history.entitiesByKey[entry.value])):state.turns??[];
+      for(const turn of turns)for(const item of turn?.items??[])if(item.type==="imageView"&&item.id===callId){
+        const file=imagePath(item.path);if(!file)throw new Error("Desktop 未提供可预览的图像路径");
+        return readImagePreview(file);
+      }
+    }
+    throw new Error("当前 Desktop 会话中未找到这条读图记录");
+  }
   async models(){return modelsFromToolSchema(await this.tools.describe("create_thread"));}
   bindRoot(threadId:string,env:Readonly<Record<string,string>>){
     this.archives.registerThread(threadId);

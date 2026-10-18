@@ -38,6 +38,12 @@ paseo plugin reload paseo-codex-desktop
 
 在 Providers 中启用 ChatGPT Desktop，刷新模型列表；新建 agent 时选择该 Provider 即可。模型来自本机 Desktop 当前可用列表。导入或恢复旧聊天时，可能需要先在 Desktop 中打开它。
 
+## 读图记录
+
+Desktop 的公开 imageView 事件会在 Paseo 时间线显示“已查看 1 张图像”，展开后可查看路径和图片预览，点击预览可放大。主会话实时事件、后台原生子任务及历史回放均支持。预览按点击加载，没有定时刷新；只允许读取该会话或其原生后代中真实读图事件引用的文件，不接受任意文件路径。
+
+预览支持不超过 4 MiB 的 PNG、JPEG、GIF、WebP。原图移动或删除后会显示加载失败；同一路径的文件被覆盖时，预览显示当前文件内容。升级前已缓存的历史需要通过 Paseo 的 Reload agent 重新回放；若首次只恢复了旧缓存，可再执行一次 Reload agent。
+
 ## 原生子 agent 与归档
 
 Desktop 主聊天调用原生 `spawn_agent` 后，子任务显示在 Paseo 输入框上方的 subagent 列表中，可查看独立输出。插件不自动创建 Settings → Agents 中的启动配置。

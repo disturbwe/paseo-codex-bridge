@@ -27,6 +27,7 @@ export class RolloutReducer {
       if (native.type === "AgentMessage") item = { type: "agentMessage", id: native.id, text: (native.content ?? []).filter((part: Json) => part.type === "Text").map((part: Json) => part.text).join(""), phase: native.phase };
       else if (native.type === "UserMessage") item = { type: "userMessage", id: native.id, content: (native.content ?? []).map((part: Json) => ({ ...part, type: String(part.type).toLowerCase() })) };
       else if (native.type === "CommandExecution") item = { type: "commandExecution", id: native.id, command: Array.isArray(native.command) ? native.command.map((part: unknown) => JSON.stringify(String(part))).join(" ") : String(native.command ?? ""), cwd: native.cwd, status: native.status === "InProgress" ? "inProgress" : String(native.status).toLowerCase(), aggregatedOutput: native.aggregated_output, exitCode: native.exit_code };
+      else if (native.type === "ImageView") item = {type:"imageView",id:native.id,path:native.path,status:event.type === "item_started"?"inProgress":"completed"};
       else if (native.type === "CollabAgentToolCall") item = { type: "collabAgentToolCall", id: native.id, tool: native.tool, status: String(native.status).toLowerCase(), receiverThreadIds: native.receiver_thread_ids ?? [], prompt: native.prompt };
       else return; // Never copy reasoning, developer/system content, or raw response items.
       const index = turn.items.findIndex((current: Json) => current.id === item.id);

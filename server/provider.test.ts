@@ -124,3 +124,16 @@ test("Native Desktop children populate Paseo provider subagents once, with isola
   assert.ok(!events.some(e => e.type === "timeline.item" && e.sessionId === "parent" && e.item.type === "assistant_message"));
   await connection.close();
 });
+
+test("Desktop image views retain public paths and status in live and replayed timelines",async()=>{
+  const {bridge,connection,events}=setup();
+  bridge.state.turns=[{turnId:"image-turn",status:"completed",items:[{type:"imageView",id:"image-call",path:"/tmp/render.png"}]}];
+  await connection.send({type:"session.open",requestId:"image-replay",sessionId:"image-agent",config,persistence:{version:1,data:{threadId:"native-thread"}},history:"replay"});await tick();
+  const rows=events.filter(e=>e.type==="timeline.item"&&e.item.type==="tool_call"&&e.item.metadata?.desktopImageView===true);
+  assert.equal(rows.length,1);
+  const item=timelineFromItem({type:"imageView",id:"image-call",path:"/tmp/render.png",status:"inProgress"});
+  assert.equal(item?.id,"desktop:image-call");assert.equal(item?.type==="tool_call"&&item.status,"running");
+  assert.equal(item?.type==="tool_call"&&item.detail.type,"plain_text");
+  assert.equal(item?.type==="tool_call"&&item.metadata?.filePath,"/tmp/render.png");
+  await connection.close();
+});

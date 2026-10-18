@@ -1,3 +1,4 @@
+import { imagePath } from "./images";
 import { toolsEndpoint } from "./endpoints";
 import { randomUUID } from "node:crypto";
 import {
@@ -31,6 +32,13 @@ export function timelineFromItem(item: Json): ProviderTimelineItem | null {
   if (item.type === "functionCallOutput" && item.namespace === "codex_app" && ["create_thread", "send_message_to_thread"].includes(item.name) && typeof item.output === "string") {
     const delegated = item.output.match(/<codex_delegation>[\s\S]*?<input>([\s\S]*)<\/input>\s*<\/codex_delegation>/);
     if (delegated) return { type: "user_message", id, text: delegated[1], messageId: item.id };
+  }
+  if (item.type === "imageView") {
+    const filePath=imagePath(item.path)??"";
+    const status=item.status==="inProgress"?"running":item.status==="failed"?"failed":item.status==="interrupted"?"canceled":"completed";
+    const detail={type:"plain_text" as const,label:"已查看 1 张图像",text:filePath||"Desktop 未提供图像路径",icon:"eye" as const};
+    const metadata={desktopImageView:true,filePath};
+    return status==="failed"?{type:"tool_call",id,callId:item.id,name:"Desktop image view",detail,metadata,status,error:{message:"Desktop image view failed"}}:{type:"tool_call",id,callId:item.id,name:"Desktop image view",detail,metadata,status,error:null};
   }
   if (item.type === "commandExecution") {
     const status = item.status === "inProgress" ? "running" : item.status === "failed" || (typeof item.exitCode === "number" && item.exitCode !== 0) ? "failed" : item.status === "interrupted" ? "canceled" : "completed";
@@ -285,6 +293,7 @@ export class DesktopProviderConnection implements ProviderConnection {
   private update(session: Session, state: Json) {
     this.emitConfig(session, state);
     const turns = turnsFromState(state);
+    if(session.replaying)this.bridge.evidence("provider_image_history_replayed",{sessionId:session.id,threadId:session.threadId,imageCount:turns.reduce((count:number,turn:Json)=>count+(turn.items??[]).filter((item:Json)=>item.type==="imageView").length,0)});
     for (const turn of turns) {
       for (const native of turn.items ?? []) for (const child of childrenFromItem(native)) this.discoverChild(session, child);
       if (session.ignoredTurns.has(turn.turnId)) continue;
